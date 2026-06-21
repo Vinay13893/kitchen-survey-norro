@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Answers,
-  classifyResponse,
-  DEFAULT_HOUSEHOLD_SHARE_WEIGHTS,
-  HOUSEHOLD_SHARE_WEIGHTS_STORAGE_KEY,
-  HouseholdShareWeights,
-  sections,
-} from '@/lib/survey';
+import { Answers, classifyResponse, sections } from '@/lib/survey';
 import { MultiChoice, Question, RatingScale, SingleChoice, TextInput } from '@/components/fields';
 import { baseQuestions, QUESTION_CONFIG_STORAGE_KEY, SurveyQuestion } from '@/lib/questionnaire';
 
@@ -173,7 +166,6 @@ export default function SurveyApp() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<SurveyQuestion[]>(baseQuestions);
-  const [householdWeights, setHouseholdWeights] = useState<HouseholdShareWeights>(DEFAULT_HOUSEHOLD_SHARE_WEIGHTS);
 
   useEffect(() => {
     try {
@@ -182,21 +174,6 @@ export default function SurveyApp() {
       setQuestions(mergeQuestionConfig(baseQuestions, parsed));
     } catch {
       setQuestions(baseQuestions);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(HOUSEHOLD_SHARE_WEIGHTS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<HouseholdShareWeights>;
-      setHouseholdWeights({
-        lifeStage: Number(parsed.lifeStage) || DEFAULT_HOUSEHOLD_SHARE_WEIGHTS.lifeStage,
-        livingSetup: Number(parsed.livingSetup) || DEFAULT_HOUSEHOLD_SHARE_WEIGHTS.livingSetup,
-        householdAttributes: Number(parsed.householdAttributes) || DEFAULT_HOUSEHOLD_SHARE_WEIGHTS.householdAttributes,
-      });
-    } catch {
-      setHouseholdWeights(DEFAULT_HOUSEHOLD_SHARE_WEIGHTS);
     }
   }, []);
 
@@ -269,7 +246,7 @@ export default function SurveyApp() {
     const finalAnswers: Answers = {};
     visibleQuestions.forEach((question) => serializeQuestionAnswer(question, answers, finalAnswers));
 
-    const classification = classifyResponse(finalAnswers, { householdWeights });
+    const classification = classifyResponse(finalAnswers);
     const entry: StoredResponse = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
